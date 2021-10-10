@@ -1,5 +1,6 @@
 library(haven)
 library(dplyr)
+library(ggplot2)
 
 # Read data
 demographics <- read_xpt("DEMO_J.XPT")
@@ -42,3 +43,15 @@ nhanes <-
 
 # Age is topcoded at 80 so 80 and above should be excluded
 # Age missing is coded as "." which should be removed
+
+# Anthony work
+dim(nhanes)
+head(nhanes)
+
+View(nhanes)
+table(nhanes$RIAGENDR,nhanes$SDDSRVYR)
+class(nhanes$RIDAGEYR)
+nhanes %>% ggplot(aes(x="RIDAGEYR")) + geom_histogram(stat = "count")
+range(nhanes$RIDAGEYR)
+nhanes %>% ggplot(aes(x=Age, y=Systolic_Blood_Pressure)) + geom_point()
+summary(lm(nhanes$Age~nhanes$Systolic_Blood_Pressure))
