@@ -5,7 +5,7 @@ Members: Erin Pennington, Bella Vincent, Janice Oh, Anthony Tang, James Groh, Ji
 
 Project Title: Aging Biomarkers 
 
-Project Description:
+Project Description: Predicting age based on biomarkers
 
 Link to Dataset: https://wwwn.cdc.gov/nchs/nhanes/continuousnhanes/default.aspx?BeginYear=2017
 
