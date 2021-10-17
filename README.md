@@ -1,7 +1,7 @@
 # Aging Biomarkers
 SDS 322E Project: Aging Biomarkers
 
-Members: Erin Pennington, Bella Vincent
+Members: Erin Pennington, Bella Vincent, Janice Oh, Anthony Tang, James Groh, Jilliane Lagus
 
 Project Title: Aging Biomarkers 
 
