@@ -55,3 +55,16 @@ nhanes %>% ggplot(aes(x="RIDAGEYR")) + geom_histogram(stat = "count")
 range(nhanes$RIDAGEYR)
 nhanes %>% ggplot(aes(x=Age, y=Systolic_Blood_Pressure)) + geom_point()
 summary(lm(nhanes$Age~nhanes$Systolic_Blood_Pressure))
+
+## Janice's work
+
+# White Blood Cell Count Visualization
+nhanes %>% arrange(desc(White_Blood_Cell_Count)) # to see highest/outliers for WBC
+nhanes %>% ggplot(aes(x=Age)) + geom_point(aes(y=White_Blood_Cell_Count))
+nhanes %>% filter(White_Blood_Cell_Count < 50) %>% ggplot(aes(x=Age)) + geom_point(aes(y=White_Blood_Cell_Count))
+nhanes %>% filter(White_Blood_Cell_Count < 30) %>% ggplot(aes(x=Age, y=White_Blood_Cell_Count)) + geom_point() + geom_smooth(method="lm")
+
+# Lymphocyte Percent
+nhanes %>% ggplot(aes(x=Age, y=Lymphocyte_Percent)) + geom_point() + geom_smooth(method="lm")
+
+
