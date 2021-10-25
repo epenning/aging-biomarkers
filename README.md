@@ -13,11 +13,10 @@ Aging Biomarkers
 Our project goals are to explore the relationships between biomarkers or
 other survey data and age.
 
-In the first part we plan to explore aspects such as socioeconomic
-status and demographics in relation to age, age categories, or
-biomarkers such as blood pressure, oral health, etc.
+In Part I, we plan to explore aspects (e.g., socioeconomic
+status, demographics) or biomarkers (e.g. blood pressure, oral health, etc.) in relation to age and age categories (early aging, middle aging, late aging).
 
-Our tentative plan for the second part is to determine significant
+In Part II, the tentative plan is to determine significant
 biomarkers that can be used in a regression to predict the biological
 age of an individual. For example, perhaps a marker such as blood
 pressure might indicate that a person might be at risk for suffering
