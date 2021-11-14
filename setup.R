@@ -53,7 +53,7 @@ nhanes %>% mutate(Gender = as.factor(Gender))
 nhanes$Gender <- nhanes$Gender %>% str_replace("1", "Male")
 nhanes$Gender <- nhanes$Gender %>% str_replace("2", "Female")
 
-# Change below to "Female" to see the Female version.
+# HERE IS WHERE YOU ASSIGN GENDER.  Change below to "Female" to see the Female version.
 nhanes <- nhanes %>% filter(Gender == "Male")
 
 # PCA
@@ -83,6 +83,11 @@ pca_nhanes <- pca_nhanes %>%
         Age > 60 & Age <= 80 ~ "61-79"
     )
     )
+
+#### Clustering analysis
+
+
+pca_nhanes
 
 # Plots PC1 vs. PC2 and PC1 vs PC3.  Ellipse of each Age Range
 ggplot(pca_nhanes, aes(PC1, PC2, fill = Age_Range, col = Age_Range)) +
