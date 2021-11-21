@@ -1,6 +1,7 @@
 library(haven)
 library(dplyr)
 library(ggplot2)
+library(stringr)
 
 # Read data
 demographics <- read_xpt("DEMO_J.XPT")
@@ -9,6 +10,7 @@ cReactive <- read_xpt("HSCRP_J.XPT")
 glycohemoglobin <- read_xpt("GHB_J.XPT")
 bloodCount <- read_xpt("CBC_J.XPT")
 bloodPressure <- read_xpt("BPX_J.XPT")
+healthStatus <- read_xpt("HSQ_J.XPT")
 
 # Merge data
 nhanes <- merge(demographics, biochemistry, by = "SEQN")
@@ -16,6 +18,7 @@ nhanes <- merge(nhanes, cReactive, by = "SEQN")
 nhanes <- merge(nhanes, glycohemoglobin, by = "SEQN")
 nhanes <- merge(nhanes, bloodCount, by = "SEQN")
 nhanes <- merge(nhanes, bloodPressure, by = "SEQN")
+nhanes <- merge(nhanes, healthStatus, by = "SEQN")
 
 # Get mean systolic blood pressure
 nhanes$BPXSY_MEAN <-
@@ -39,6 +42,7 @@ nhanes <-
         Mean_Cell_Volume = "LBXMCVSI",
         Red_Cell_Distribution_Width = "LBXRDW",
         Systolic_Blood_Pressure = "BPXSY_MEAN",
+        Health_Status = "HSD010",
         Age = "RIDAGEYR",
         Gender = "RIAGENDR"
     )
@@ -53,7 +57,8 @@ nhanes %>% mutate(Gender = as.factor(Gender))
 nhanes$Gender <- nhanes$Gender %>% str_replace("1", "Male")
 nhanes$Gender <- nhanes$Gender %>% str_replace("2", "Female")
 
-write.csv(nhanes, "nhanes_data.csv", row.names = FALSE)
+# Only include health status 1, 2, 3 (Excellent, Very Good, Good)
+write.csv(nhanes %>% filter(Health_Status < 4), "nhanes_data.csv", row.names = FALSE)
 
 # HERE IS WHERE YOU ASSIGN GENDER.  Change below to "Female" to see the Female version.
 nhanes <- nhanes %>% filter(Gender == "Male")
@@ -195,6 +200,7 @@ cor(pca_top_10_measurements[1:10], pca_top_10_measurements[, 11:13])
 dim(nhanes)
 head(nhanes)
 
+
 View(nhanes)
 table(nhanes$RIAGENDR,nhanes$SDDSRVYR)
 class(nhanes$RIDAGEYR)
@@ -202,6 +208,31 @@ nhanes %>% ggplot(aes(x="RIDAGEYR")) + geom_histogram(stat = "count")
 range(nhanes$RIDAGEYR)
 nhanes %>% ggplot(aes(x=Age, y=Systolic_Blood_Pressure)) + geom_point()
 summary(lm(nhanes$Age~nhanes$Systolic_Blood_Pressure))
+
+#11.21
+library(tidyverse)
+library(cluster)
+
+nhanes <- nhanes %>% na.omit()
+
+cormat <- nhanes %>% cor()
+
+cormat %>% as.data.frame %>% rownames_to_column("var1")
+
+tidycor <- cormat %>%
+    as.data.frame %>%
+    rownames_to_column("var1") %>%
+    pivot_longer(-1, names_to = "var2", values_to = "correlation")
+
+tidycor %>% ggplot(aes(var1, var2, fill=correlation)) +
+    geom_tile() +
+    scale_fill_gradient2(low="red", mid="white", high = "blue") +
+    geom_text(aes(label=round(correlation,2)),color = "black", size = 3.5)+ #overlays correlation values
+    theme(axis.text.x = element_text(angle = 90, hjust = 1)) + #flips the x-axis labels
+    coord_fixed()
+
+# hypotheses: older adults have greater BP and greater blood urea nitrogen
+
 
 ## Janice's work
 # Create male and female subsets
