@@ -263,8 +263,8 @@ nhanes_male %>% ggplot(aes(x=Age, y=Alkaline_Phosphatase)) + geom_point() + geom
 nhanes_female %>% ggplot(aes(x=Age, y=Alkaline_Phosphatase)) + geom_point() + geom_smooth(method="lm")
 
 # Blood Urea Nitrogen - slightly positive for both
-nhanes_male %>% ggplot(aes(x=Age, y=Blood_Urea_Nitrogen)) + geom_point() + geom_smooth(method="lm")
-nhanes_female %>% ggplot(aes(x=Age, y=Blood_Urea_Nitrogen)) + geom_point() + geom_smooth(method="lm")
+nhanes_male %>% ggplot(aes(x=Age, y=Blood_Urea_Nitrogen)) + geom_point() + geom_smooth(method="lm") + ggtitle("Blood Urea Nitrogen vs. Age - Male")
+nhanes_female %>% ggplot(aes(x=Age, y=Blood_Urea_Nitrogen)) + geom_point() + geom_smooth(method="lm") + ggtitle("Blood Urea Nitrogen vs. Age - Female")
 
 # Creatinine - slightly positive for male and female
 nhanes_male %>% ggplot(aes(x=Age, y=Creatinine)) + geom_point() + geom_smooth(method="lm")
