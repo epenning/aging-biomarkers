@@ -137,7 +137,7 @@ range(nhanes$RIDAGEYR)
 nhanes %>% ggplot(aes(x=Age, y=Systolic_Blood_Pressure)) + geom_point()
 summary(lm(nhanes$Age~nhanes$Systolic_Blood_Pressure))
 
-#11.21
+#Anthony work 11.21
 library(tidyverse)
 library(cluster)
 
