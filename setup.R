@@ -236,6 +236,21 @@ tidycor %>% ggplot(aes(var1, var2, fill=correlation)) +
 
 ## Janice's work
 # Create male and female subsets
+
+# Function to do the correlations for a particular gender
+do_correlations <- function(gender) {
+    nhanes_male <- nhanes %>% filter(Gender == gender)
+
+    # Albumin - slightly negative for male and female
+    nhanes_male %>% ggplot(aes(x = Age, y = Albumin)) + geom_point() + geom_smooth(method =
+                                                                                       "lm")
+
+    ##... insert other correlations here...
+}
+
+do_correlations("Male")
+do_correlations("Female")
+
 nhanes_male <- nhanes %>% filter(Gender == "Male")
 nhanes_female <- nhanes %>% filter(Gender == "Female")
 
@@ -251,7 +266,7 @@ nhanes_female %>% ggplot(aes(x=Age, y=Alkaline_Phosphatase)) + geom_point() + ge
 nhanes_male %>% ggplot(aes(x=Age, y=Blood_Urea_Nitrogen)) + geom_point() + geom_smooth(method="lm")
 nhanes_female %>% ggplot(aes(x=Age, y=Blood_Urea_Nitrogen)) + geom_point() + geom_smooth(method="lm")
 
-# Creatinine - slightly positive for male and female 
+# Creatinine - slightly positive for male and female
 nhanes_male %>% ggplot(aes(x=Age, y=Creatinine)) + geom_point() + geom_smooth(method="lm")
 nhanes_female %>% ggplot(aes(x=Age, y=Creatinine)) + geom_point() + geom_smooth(method="lm")
 nhanes_male %>%  filter(Creatinine < 5) %>% ggplot(aes(x=Age, y=Creatinine)) + geom_point() + geom_smooth(method="lm")
