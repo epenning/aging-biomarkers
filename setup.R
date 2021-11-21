@@ -43,6 +43,8 @@ nhanes <-
         Gender = "RIAGENDR"
     )
 
+write.csv(nhanes, "nhanes_data.csv", row.names = FALSE)
+
 # James' Work (Plus, I added ID = "SEQN" to the code above)
 
 # Age missing is coded as ".".  Age is topcoded at 80.  Both these type of entries are removed.
@@ -57,25 +59,25 @@ nhanes$Gender <- nhanes$Gender %>% str_replace("2", "Female")
 nhanes <- nhanes %>% filter(Gender == "Male")
 
 # PCA
-pca <- nhanes %>% select(-ID, -Age, -Gender) %>% prcomp(scale=TRUE) 
+pca <- nhanes %>% select(-ID, -Age, -Gender) %>% prcomp(scale=TRUE)
 
 # Makes a scree plot for PC 1-10
 pca_var <- pca$sdev^2
 pca_var_per <- round(pca_var/sum(pca_var)*100, 1)
-x <- barplot(pca_var_per[1:10], 
+x <- barplot(pca_var_per[1:10],
              main="Scree Plot", xlab="Principal Component", ylab="Percent Variation",
              ylim=c(0,25))
 y <- pca_var_per[1:10]
 text(x,y+1,labels=as.character(y))
 
 # Cumulative sum of % variation accounted for by PC 1-10
-# 3 PC's explain about 40% of variance, which is really good, 
+# 3 PC's explain about 40% of variance, which is really good,
 # but we remember we only entered 16 physiological measurements.
-cumsum(pca_var_per[1:10]) 
+cumsum(pca_var_per[1:10])
 
 #Creates Age Ranges
 pca_nhanes <- nhanes %>% select(ID, Age) %>% cbind(pca$x[,1:3])
-pca_nhanes <- pca_nhanes %>% 
+pca_nhanes <- pca_nhanes %>%
     mutate(Age_Range = case_when(
         Age <= 20 ~ "20 and under",
         Age > 20 & Age <= 40 ~ "21-40",
@@ -106,7 +108,7 @@ ggplot(pca_nhanes, aes(PC1, PC3, fill = Age_Range, col = Age_Range)) +
     ylab(paste("PC3 - ", pca_var_per[3], "%", sep="")) +
     ggtitle("PC1 vs PC3 Graph")
 
-# Ranks the contributors to PCA 1, with the most significant at the top. 
+# Ranks the contributors to PCA 1, with the most significant at the top.
 loading_score_ranked <- names(sort(abs(pca$rotation[,1]), decreasing=TRUE))
 loading_score_ranked
 
