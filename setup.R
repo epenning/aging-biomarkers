@@ -43,8 +43,6 @@ nhanes <-
         Gender = "RIAGENDR"
     )
 
-write.csv(nhanes, "nhanes_data.csv", row.names = FALSE)
-
 # James' Work (Plus, I added ID = "SEQN" to the code above)
 
 # Age missing is coded as ".".  Age is topcoded at 80.  Both these type of entries are removed.
@@ -54,6 +52,8 @@ nhanes <- nhanes %>% filter(is.numeric(Age)) %>% filter(Age != 80) %>% filter(is
 nhanes %>% mutate(Gender = as.factor(Gender))
 nhanes$Gender <- nhanes$Gender %>% str_replace("1", "Male")
 nhanes$Gender <- nhanes$Gender %>% str_replace("2", "Female")
+
+write.csv(nhanes, "nhanes_data.csv", row.names = FALSE)
 
 # HERE IS WHERE YOU ASSIGN GENDER.  Change below to "Female" to see the Female version.
 nhanes <- nhanes %>% filter(Gender == "Male")
