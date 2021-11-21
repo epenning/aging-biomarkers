@@ -123,6 +123,7 @@ cor(pca_top_10_measurements[1:10], pca_top_10_measurements[, 11:13])
 dim(nhanes)
 head(nhanes)
 
+
 View(nhanes)
 table(nhanes$RIAGENDR,nhanes$SDDSRVYR)
 class(nhanes$RIDAGEYR)
@@ -130,6 +131,31 @@ nhanes %>% ggplot(aes(x="RIDAGEYR")) + geom_histogram(stat = "count")
 range(nhanes$RIDAGEYR)
 nhanes %>% ggplot(aes(x=Age, y=Systolic_Blood_Pressure)) + geom_point()
 summary(lm(nhanes$Age~nhanes$Systolic_Blood_Pressure))
+
+#11.21
+library(tidyverse)
+library(cluster)
+
+nhanes <- nhanes %>% na.omit()
+
+cormat <- nhanes %>% cor()
+
+cormat %>% as.data.frame %>% rownames_to_column("var1")
+
+tidycor <- cormat %>%
+    as.data.frame %>%
+    rownames_to_column("var1") %>%
+    pivot_longer(-1, names_to = "var2", values_to = "correlation")
+
+tidycor %>% ggplot(aes(var1, var2, fill=correlation)) + 
+    geom_tile() + 
+    scale_fill_gradient2(low="red", mid="white", high = "blue") +
+    geom_text(aes(label=round(correlation,2)),color = "black", size = 3.5)+ #overlays correlation values
+    theme(axis.text.x = element_text(angle = 90, hjust = 1)) + #flips the x-axis labels
+    coord_fixed()
+
+# hypotheses: older adults have greater BP and greater blood urea nitrogen
+
 
 ## Janice's work
 
