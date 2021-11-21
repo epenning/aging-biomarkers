@@ -1,6 +1,7 @@
 library(haven)
 library(dplyr)
 library(ggplot2)
+library(stringr)
 
 # Read data
 demographics <- read_xpt("DEMO_J.XPT")
@@ -9,6 +10,7 @@ cReactive <- read_xpt("HSCRP_J.XPT")
 glycohemoglobin <- read_xpt("GHB_J.XPT")
 bloodCount <- read_xpt("CBC_J.XPT")
 bloodPressure <- read_xpt("BPX_J.XPT")
+healthStatus <- read_xpt("HSQ_J.XPT")
 
 # Merge data
 nhanes <- merge(demographics, biochemistry, by = "SEQN")
@@ -16,6 +18,7 @@ nhanes <- merge(nhanes, cReactive, by = "SEQN")
 nhanes <- merge(nhanes, glycohemoglobin, by = "SEQN")
 nhanes <- merge(nhanes, bloodCount, by = "SEQN")
 nhanes <- merge(nhanes, bloodPressure, by = "SEQN")
+nhanes <- merge(nhanes, healthStatus, by = "SEQN")
 
 # Get mean systolic blood pressure
 nhanes$BPXSY_MEAN <-
@@ -39,6 +42,7 @@ nhanes <-
         Mean_Cell_Volume = "LBXMCVSI",
         Red_Cell_Distribution_Width = "LBXRDW",
         Systolic_Blood_Pressure = "BPXSY_MEAN",
+        Health_Status = "HSD010",
         Age = "RIDAGEYR",
         Gender = "RIAGENDR"
     )
@@ -52,6 +56,9 @@ nhanes <- nhanes %>% filter(is.numeric(Age)) %>% filter(Age != 80) %>% filter(is
 nhanes %>% mutate(Gender = as.factor(Gender))
 nhanes$Gender <- nhanes$Gender %>% str_replace("1", "Male")
 nhanes$Gender <- nhanes$Gender %>% str_replace("2", "Female")
+
+# Only include health status 1, 2, 3 (Excellent, Very Good, Good)
+nhanes <- nhanes %>% filter(Health_Status < 4)
 
 write.csv(nhanes, "nhanes_data.csv", row.names = FALSE)
 
