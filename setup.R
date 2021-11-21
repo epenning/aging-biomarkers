@@ -58,9 +58,7 @@ nhanes$Gender <- nhanes$Gender %>% str_replace("1", "Male")
 nhanes$Gender <- nhanes$Gender %>% str_replace("2", "Female")
 
 # Only include health status 1, 2, 3 (Excellent, Very Good, Good)
-nhanes <- nhanes %>% filter(Health_Status < 4)
-
-write.csv(nhanes, "nhanes_data.csv", row.names = FALSE)
+write.csv(nhanes %>% filter(Health_Status < 4), "nhanes_data.csv", row.names = FALSE)
 
 # HERE IS WHERE YOU ASSIGN GENDER.  Change below to "Female" to see the Female version.
 nhanes <- nhanes %>% filter(Gender == "Male")
@@ -154,8 +152,8 @@ tidycor <- cormat %>%
     rownames_to_column("var1") %>%
     pivot_longer(-1, names_to = "var2", values_to = "correlation")
 
-tidycor %>% ggplot(aes(var1, var2, fill=correlation)) + 
-    geom_tile() + 
+tidycor %>% ggplot(aes(var1, var2, fill=correlation)) +
+    geom_tile() +
     scale_fill_gradient2(low="red", mid="white", high = "blue") +
     geom_text(aes(label=round(correlation,2)),color = "black", size = 3.5)+ #overlays correlation values
     theme(axis.text.x = element_text(angle = 90, hjust = 1)) + #flips the x-axis labels
