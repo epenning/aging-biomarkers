@@ -2,6 +2,7 @@ library(haven)
 library(dplyr)
 library(ggplot2)
 library(stringr)
+library(cluster)
 
 # Read data
 demographics <- read_xpt("DEMO_J.XPT")
@@ -42,10 +43,12 @@ nhanes <-
         Mean_Cell_Volume = "LBXMCVSI",
         Red_Cell_Distribution_Width = "LBXRDW",
         Systolic_Blood_Pressure = "BPXSY_MEAN",
-        Health_Status = "HSD010",
+#        Health_Status = "HSD010",
         Age = "RIDAGEYR",
-        Gender = "RIAGENDR"
+        Gender = "RIAGENDR",
+#        Income_Ratio = "INDFMPIR"   # Ratio of Income to Poverty, thought about adding but didn't
     )
+
 
 # James' Work (Plus, I added ID = "SEQN" to the code above)
 
@@ -53,145 +56,111 @@ nhanes <-
 # Entries containing NA's are removed.
 # Gender is reclassified from 1 and 2 to Male and Female to make the data clearer.
 nhanes <- nhanes %>% filter(is.numeric(Age)) %>% filter(Age != 80) %>% filter(is.numeric(Gender)) %>% na.omit()
+#Exlude under 25
+nhanes <- nhanes %>% filter(Age > 25)
+
 nhanes %>% mutate(Gender = as.factor(Gender))
 nhanes$Gender <- nhanes$Gender %>% str_replace("1", "Male")
 nhanes$Gender <- nhanes$Gender %>% str_replace("2", "Female")
 
 # Only include health status 1, 2, 3 (Excellent, Very Good, Good)
-write.csv(nhanes %>% filter(Health_Status < 4), "nhanes_data.csv", row.names = FALSE)
+#write.csv(nhanes %>% filter(Health_Status < 4), "nhanes_data.csv", row.names = FALSE)
 
-# HERE IS WHERE YOU ASSIGN GENDER.  Change below to "Female" to see the Female version.
+# Change below to "Female" to see the Female version.
 nhanes <- nhanes %>% filter(Gender == "Male")
 
-# PCA
-pca <- nhanes %>% select(-ID, -Age, -Gender) %>% prcomp(scale=TRUE)
+############## Clustering: Is clustering the best way to analyze the data or is Regression?
 
-# Makes a scree plot for PC 1-10
+# Do we need to separate based on Gender?
+
+nhanes %>% ggplot(aes(Age, Systolic_Blood_Pressure, col=Gender)) + geom_point()
+
+# Does the data form clusters at all?
+
+clust_dat<- nhanes %>% select(Age, Systolic_Blood_Pressure)
+
+sil_width<-vector() #empty vector to hold mean sil width
+
+for(i in 2:10){
+    kms <- kmeans(clust_dat,centers=i) #compute k-means solution
+    sil <- silhouette(kms$cluster, dist(clust_dat)) #get sil widths
+    sil_width[i]<-mean(sil[,3]) #take averages (higher is better)
+}
+
+ggplot() + 
+    geom_line(aes(x=1:10,y=sil_width)) +
+    scale_x_continuous(name="k",breaks=1:10)
+
+kmeans1 <- clust_dat %>% kmeans(2)
+kmeansclust <- clust_dat %>% mutate(cluster=as.factor(kmeans1$cluster))
+kmeansclust %>% ggplot(aes(Age, Systolic_Blood_Pressure, color=cluster)) + geom_point()
+
+########################## PCA
+# Systolic Blood Pressure is just one variable.  What if we look at all of them using PCA?
+pca <- nhanes %>% select(-ID, -Age, -Gender) %>% prcomp(scale=TRUE) 
+
+#Biplot shows how original vector contributes to PC1 and PC2
+biplot(pca, scale = 0)  # How do you get ride of observationsa and just have vectors????
+
+# The Biplot is unclear so . . . 
+# Ranks the contributors to PC 1, with the most significant at the top.  
+# Loading score is how much original variable contributes to PC1
+loading_scores <- pca$rotation[,1]
+loading_scores
+
+# Base on the absolute value, what are the biggest contributors?
+loading_score_ranked <- names(sort(abs(pca$rotation[,1]), decreasing=TRUE))
+loading_score_ranked
+
+# Makes a scree plot for PC 1-10.  How much variance in the data does each PC explain
 pca_var <- pca$sdev^2
 pca_var_per <- round(pca_var/sum(pca_var)*100, 1)
-x <- barplot(pca_var_per[1:10],
+x <- barplot(pca_var_per[1:10], 
              main="Scree Plot", xlab="Principal Component", ylab="Percent Variation",
              ylim=c(0,25))
 y <- pca_var_per[1:10]
 text(x,y+1,labels=as.character(y))
 
 # Cumulative sum of % variation accounted for by PC 1-10
-# 3 PC's explain about 40% of variance, which is really good,
+# 3 PC's explain about 40% of variance, which is really good, 
 # but we remember we only entered 16 physiological measurements.
-cumsum(pca_var_per[1:10])
+cumsum(pca_var_per[1:10]) 
 
-#Creates Age Ranges
-pca_nhanes <- nhanes %>% select(ID, Age) %>% cbind(pca$x[,1:3])
-pca_nhanes <- pca_nhanes %>%
-    mutate(Age_Range = case_when(
-        Age <= 20 ~ "20 and under",
-        Age > 20 & Age <= 40 ~ "21-40",
-        Age > 40 & Age <= 60 ~ "41-60",
-        Age > 60 & Age <= 80 ~ "61-79"
-    )
-    )
+# Binds PCA data to original variables Age and Gender
+pca_nhanes <- nhanes %>% select(ID, Age, Gender) %>% cbind(pca$x[,1:3])
 
-#### Clustering analysis
-
-
-pca_nhanes
-
-# Plots PC1 vs. PC2 and PC1 vs PC3.  Ellipse of each Age Range
-ggplot(pca_nhanes, aes(PC1, PC2, fill = Age_Range, col = Age_Range)) +
-    stat_ellipse(geom = "polygon", col = "black", alpha = 0.5) +
+# Plots PC1 vs. PC2
+# Does Age form obvious clusters in PC space?
+ggplot(pca_nhanes, aes(PC1, PC2, col=Age)) +
     geom_point() +
-    #geom_text(aes(label=ID, size=10)) +
     xlab(paste("PC1 - ", pca_var_per[1], "%", sep="")) +
     ylab(paste("PC2 - ", pca_var_per[2], "%", sep="")) +
     ggtitle("PC1 vs PC2 Graph")
 
-ggplot(pca_nhanes, aes(PC1, PC3, fill = Age_Range, col = Age_Range)) +
-    stat_ellipse(geom = "polygon", col = "black", alpha = 0.5) +
-    geom_point() +
-    #geom_text(aes(label=ID, size=10)) +
-    xlab(paste("PC1 - ", pca_var_per[1], "%", sep="")) +
-    ylab(paste("PC3 - ", pca_var_per[3], "%", sep="")) +
-    ggtitle("PC1 vs PC3 Graph")
-
-# Ranks the contributors to PCA 1, with the most significant at the top.
-loading_score_ranked <- names(sort(abs(pca$rotation[,1]), decreasing=TRUE))
-loading_score_ranked
-
-# Outputs correlation between top 10 physiological measurements and PCA 1-3.
-pca_top_10_measurements <- nhanes %>% select(loading_score_ranked[1:10]) %>% cbind(pca$x[,1:3])
-cor(pca_top_10_measurements[1:10], pca_top_10_measurements[, 11:13])
-
-# Janice: Repeat PCA but with female
-# Age missing is coded as ".".  Age is topcoded at 80.  Both these type of entries are removed.
-# Entries containing NA's are removed.
-# Gender is reclassified from 1 and 2 to Male and Female to make the data clearer.
-nhanes <- nhanes %>% filter(is.numeric(Age)) %>% filter(Age != 80) %>% filter(is.numeric(Gender)) %>% na.omit()
-nhanes %>% mutate(Gender = as.factor(Gender))
-nhanes$Gender <- nhanes$Gender %>% str_replace("1", "Male")
-nhanes$Gender <- nhanes$Gender %>% str_replace("2", "Female")
-
-write.csv(nhanes, "nhanes_data.csv", row.names = FALSE)
-
-# HERE IS WHERE YOU ASSIGN GENDER.  Change below to "Female" to see the Female version.
-nhanes <- nhanes %>% filter(Gender == "Female")
-
-# PCA
-pca <- nhanes %>% select(-ID, -Age, -Gender) %>% prcomp(scale=TRUE)
-
-# Makes a scree plot for PC 1-10
-pca_var <- pca$sdev^2
-pca_var_per <- round(pca_var/sum(pca_var)*100, 1)
-x <- barplot(pca_var_per[1:10],
-             main="Scree Plot", xlab="Principal Component", ylab="Percent Variation",
-             ylim=c(0,25))
-y <- pca_var_per[1:10]
-text(x,y+1,labels=as.character(y))
-
-# Cumulative sum of % variation accounted for by PC 1-10
-# 3 PC's explain about 40% of variance, which is really good,
-# but we remember we only entered 16 physiological measurements.
-cumsum(pca_var_per[1:10])
-
-#Creates Age Ranges
-pca_nhanes <- nhanes %>% select(ID, Age) %>% cbind(pca$x[,1:3])
-pca_nhanes <- pca_nhanes %>%
-    mutate(Age_Range = case_when(
-        Age <= 20 ~ "20 and under",
-        Age > 20 & Age <= 40 ~ "21-40",
-        Age > 40 & Age <= 60 ~ "41-60",
-        Age > 60 & Age <= 80 ~ "61-79"
-    )
-    )
-
-#### Clustering analysis
 
 
-pca_nhanes
+# PCA Clustering
+# Does the data form clusters in PC space?
 
-# Plots PC1 vs. PC2 and PC1 vs PC3.  Ellipse of each Age Range
-ggplot(pca_nhanes, aes(PC1, PC2, fill = Age_Range, col = Age_Range)) +
-    stat_ellipse(geom = "polygon", col = "black", alpha = 0.5) +
-    geom_point() +
-    #geom_text(aes(label=ID, size=10)) +
-    xlab(paste("PC1 - ", pca_var_per[1], "%", sep="")) +
-    ylab(paste("PC2 - ", pca_var_per[2], "%", sep="")) +
-    ggtitle("PC1 vs PC2 Graph")
+clust_dat<- pca_nhanes %>% select(PC1,PC2)
 
-ggplot(pca_nhanes, aes(PC1, PC3, fill = Age_Range, col = Age_Range)) +
-    stat_ellipse(geom = "polygon", col = "black", alpha = 0.5) +
-    geom_point() +
-    #geom_text(aes(label=ID, size=10)) +
-    xlab(paste("PC1 - ", pca_var_per[1], "%", sep="")) +
-    ylab(paste("PC3 - ", pca_var_per[3], "%", sep="")) +
-    ggtitle("PC1 vs PC3 Graph")
+sil_width<-vector() #empty vector to hold mean sil width
 
-# Ranks the contributors to PCA 1, with the most significant at the top.
-loading_score_ranked <- names(sort(abs(pca$rotation[,1]), decreasing=TRUE))
-loading_score_ranked
+for(i in 2:10){
+    kms <- kmeans(clust_dat,centers=i) #compute k-means solution
+    sil <- silhouette(kms$cluster, dist(clust_dat)) #get sil widths
+    sil_width[i]<-mean(sil[,3]) #take averages (higher is better)
+}
 
-# Outputs correlation between top 10 physiological measurements and PCA 1-3.
-pca_top_10_measurements <- nhanes %>% select(loading_score_ranked[1:10]) %>% cbind(pca$x[,1:3])
-cor(pca_top_10_measurements[1:10], pca_top_10_measurements[, 11:13])
+ggplot() + 
+    geom_line(aes(x=1:10,y=sil_width)) +
+    scale_x_continuous(name="k",breaks=1:10)
+
+kmeans1 <- clust_dat %>% kmeans(2)
+kmeansclust <- clust_dat %>% mutate(cluster=as.factor(kmeans1$cluster), Age=nhanes$Age)
+kmeansclust %>% ggplot(aes(PC1, PC2, col=cluster)) + geom_point()
+
+
 
 
 
@@ -202,18 +171,16 @@ head(nhanes)
 
 
 View(nhanes)
-table(nhanes$RIAGENDR,nhanes$SDDSRVYR)
-class(nhanes$RIDAGEYR)
-nhanes %>% ggplot(aes(x="RIDAGEYR")) + geom_histogram(stat = "count")
-range(nhanes$RIDAGEYR)
+table(nhanes$Age)
+class(nhanes$Age)
+nhanes %>% ggplot(aes(x=Age)) + geom_histogram(stat = "count")
+range(nhanes$Age)
 nhanes %>% ggplot(aes(x=Age, y=Systolic_Blood_Pressure)) + geom_point()
 summary(lm(nhanes$Age~nhanes$Systolic_Blood_Pressure))
 
 #Anthony work 11.21
 library(tidyverse)
 library(cluster)
-
-nhanes <- nhanes %>% na.omit()
 
 cormat <- nhanes %>% cor()
 
@@ -232,6 +199,9 @@ tidycor %>% ggplot(aes(var1, var2, fill=correlation)) +
     coord_fixed()
 
 # hypotheses: older adults have greater BP and greater blood urea nitrogen
+
+
+
 
 
 ## Janice's work
