@@ -1,4 +1,4 @@
-SDS 322E Project: Aging Biomarkers
+SDS 322E Project
 ================
 Erin Pennington, Bella Vincent, Janice Oh, Anthony Tang, James Groh, Jilliane Lagus
 Fall 2021
