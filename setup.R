@@ -64,7 +64,7 @@ nhanes$Gender <- nhanes$Gender %>% str_replace("1", "Male")
 nhanes$Gender <- nhanes$Gender %>% str_replace("2", "Female")
 
 #Exlude under 25 because ????????
-nhanes <- nhanes %>% filter(Age > 25)
+nhanes_25plus <- nhanes %>% filter(Age > 25)
 
 # Make scaled version of nhanes.  Keep raw data in case need to present.
 nhanes_scaled <- nhanes %>% mutate_at(vars(-Gender, -ID), scale)
@@ -201,10 +201,19 @@ do_correlations <- function(gender) {
 do_correlations("Male")
 do_correlations("Female")
 
-nhanes_male <- nhanes %>% filter(Gender == "Male")
-nhanes_female <- nhanes %>% filter(Gender == "Female")
+#nhanes_male <- nhanes %>% filter(Gender == "Male")
+#nhanes_female <- nhanes %>% filter(Gender == "Female")
+
+do_plot <- function(biomarker) {
+    nhanes %>% ggplot(aes(x=Age, y=nhanes[,biomarker])) + geom_point(position="jitter",size=0.7,alpha=0.5) + geom_smooth(method="lm") + ylab(biomarker)
+    
+}
+
+do_plot("Albumin")
+
 
 # Albumin - slightly negative for male and female
+nhanes %>% ggplot(aes(x=Age, y=Albumin)) + geom_point() + geom_smooth(method="lm")
 nhanes_male %>% ggplot(aes(x=Age, y=Albumin)) + geom_point() + geom_smooth(method="lm")
 nhanes_female %>% ggplot(aes(x=Age, y=Albumin)) + geom_point() + geom_smooth(method="lm")
 
