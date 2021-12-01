@@ -3,6 +3,9 @@ library(dplyr)
 library(ggplot2)
 library(stringr)
 library(cluster)
+library(tidyverse)
+
+##### Import and create data set nhanes
 
 # Read data
 demographics <- read_xpt("DEMO_J.XPT")
@@ -49,35 +52,50 @@ nhanes <-
 #        Income_Ratio = "INDFMPIR"   # Ratio of Income to Poverty, thought about adding but didn't
     )
 
-
-# James' Work (Plus, I added ID = "SEQN" to the code above)
+##### Clean data
 
 # Age missing is coded as ".".  Age is topcoded at 80.  Both these type of entries are removed.
 # Entries containing NA's are removed.
-# Gender is reclassified from 1 and 2 to Male and Female to make the data clearer.
-nhanes <- nhanes %>% filter(is.numeric(Age)) %>% filter(Age != 80) %>% filter(is.numeric(Gender)) %>% na.omit()
-#Exlude under 25
-nhanes <- nhanes %>% filter(Age > 25)
+nhanes <- nhanes %>% filter(is.numeric(Age)) %>% na.omit() %>% filter(Age != 80)
 
+# Gender is reclassified from 1 and 2 to Male and Female to make the data clearer.
 nhanes %>% mutate(Gender = as.factor(Gender))
 nhanes$Gender <- nhanes$Gender %>% str_replace("1", "Male")
 nhanes$Gender <- nhanes$Gender %>% str_replace("2", "Female")
 
+#Exlude under 25 because ????????
+nhanes <- nhanes %>% filter(Age > 25)
+
+# Make scaled version of nhanes.  Keep raw data in case need to present.
+nhanes_scaled <- nhanes %>% mutate_at(vars(-Gender, -ID), scale)
+
 # Only include health status 1, 2, 3 (Excellent, Very Good, Good)
 #write.csv(nhanes %>% filter(Health_Status < 4), "nhanes_data.csv", row.names = FALSE)
 
-# Change below to "Female" to see the Female version.
-nhanes <- nhanes %>% filter(Gender == "Male")
+##### Correlation Matrix
 
-############## Clustering: Is clustering the best way to analyze the data or is Regression?
+cormat <- nhanes_scaled %>% select(-Gender, -ID) %>% cor()
+cormat %>% as.data.frame %>% rownames_to_column("var1")
 
-# Do we need to separate based on Gender?
+tidycor <- cormat %>%
+    as.data.frame %>%
+    rownames_to_column("var1") %>%
+    pivot_longer(-1, names_to = "var2", values_to = "correlation")
 
-nhanes %>% ggplot(aes(Age, Systolic_Blood_Pressure, col=Gender)) + geom_point()
+tidycor %>% ggplot(aes(var1, var2, fill=correlation)) +
+    geom_tile() +
+    scale_fill_gradient2(low="red", mid="white", high = "blue") +
+    geom_text(aes(label=round(correlation,2)),color = "black", size = 3.5)+ #overlays correlation values
+    theme(axis.text.x = element_text(angle = 90, hjust = 1)) + #flips the x-axis labels
+    coord_fixed()
+
+##### Clustering: is clustering the best way to analyze the data?
+
+# Does Blood Pressure cluster on Gender
+nhanes_scaled %>% ggplot(aes(Age, Systolic_Blood_Pressure, col=Gender)) + geom_point()
 
 # Does the data form clusters at all?
-
-clust_dat<- nhanes %>% select(Age, Systolic_Blood_Pressure)
+clust_dat<- nhanes_scaled %>% select(Age, Systolic_Blood_Pressure)
 
 sil_width<-vector() #empty vector to hold mean sil width
 
@@ -87,28 +105,26 @@ for(i in 2:10){
     sil_width[i]<-mean(sil[,3]) #take averages (higher is better)
 }
 
+# Silhouette plot: gives 2 as number of clusters
 ggplot() + 
-    geom_line(aes(x=1:10,y=sil_width)) +
-    scale_x_continuous(name="k",breaks=1:10)
+geom_line(aes(x=1:10,y=sil_width)) +
+scale_x_continuous(name="k",breaks=1:10)
 
+# Use result from silhouette plot.  How does 2 clusters look?
 kmeans1 <- clust_dat %>% kmeans(2)
 kmeansclust <- clust_dat %>% mutate(cluster=as.factor(kmeans1$cluster))
 kmeansclust %>% ggplot(aes(Age, Systolic_Blood_Pressure, color=cluster)) + geom_point()
 
-########################## PCA
+##### PCA
+
 # Systolic Blood Pressure is just one variable.  What if we look at all of them using PCA?
-pca <- nhanes %>% select(-ID, -Age, -Gender) %>% prcomp(scale=TRUE) 
+pca <- nhanes_scaled %>% select(-ID, -Age, -Gender) %>% prcomp(scale=TRUE) 
 
-#Biplot shows how original vector contributes to PC1 and PC2
-biplot(pca, scale = 0)  # How do you get ride of observationsa and just have vectors????
-
-# The Biplot is unclear so . . . 
-# Ranks the contributors to PC 1, with the most significant at the top.  
-# Loading score is how much original variable contributes to PC1
+# Loading score: how much original variable contributes to PC1
 loading_scores <- pca$rotation[,1]
 loading_scores
 
-# Base on the absolute value, what are the biggest contributors?
+# Ranks the contributors to PC 1, with the most significant at the top.
 loading_score_ranked <- names(sort(abs(pca$rotation[,1]), decreasing=TRUE))
 loading_score_ranked
 
@@ -121,11 +137,6 @@ x <- barplot(pca_var_per[1:10],
 y <- pca_var_per[1:10]
 text(x,y+1,labels=as.character(y))
 
-# Cumulative sum of % variation accounted for by PC 1-10
-# 3 PC's explain about 40% of variance, which is really good, 
-# but we remember we only entered 16 physiological measurements.
-cumsum(pca_var_per[1:10]) 
-
 # Binds PCA data to original variables Age and Gender
 pca_nhanes <- nhanes %>% select(ID, Age, Gender) %>% cbind(pca$x[,1:3])
 
@@ -137,11 +148,9 @@ ggplot(pca_nhanes, aes(PC1, PC2, col=Age)) +
     ylab(paste("PC2 - ", pca_var_per[2], "%", sep="")) +
     ggtitle("PC1 vs PC2 Graph")
 
+##### PCA Clustering
 
-
-# PCA Clustering
 # Does the data form clusters in PC space?
-
 clust_dat<- pca_nhanes %>% select(PC1,PC2)
 
 sil_width<-vector() #empty vector to hold mean sil width
@@ -160,49 +169,20 @@ kmeans1 <- clust_dat %>% kmeans(2)
 kmeansclust <- clust_dat %>% mutate(cluster=as.factor(kmeans1$cluster), Age=nhanes$Age)
 kmeansclust %>% ggplot(aes(PC1, PC2, col=cluster)) + geom_point()
 
+##### Anthony
 
-
-
-
-
-# Anthony work
-dim(nhanes)
-head(nhanes)
-
-
-View(nhanes)
-table(nhanes$Age)
-class(nhanes$Age)
+# How is Age distributed in nhanes?
 nhanes %>% ggplot(aes(x=Age)) + geom_histogram(stat = "count")
+
+# Age range of nhanes
 range(nhanes$Age)
+
 nhanes %>% ggplot(aes(x=Age, y=Systolic_Blood_Pressure)) + geom_point()
 summary(lm(nhanes$Age~nhanes$Systolic_Blood_Pressure))
 
-#Anthony work 11.21
-library(tidyverse)
-library(cluster)
-
-cormat <- nhanes %>% cor()
-
-cormat %>% as.data.frame %>% rownames_to_column("var1")
-
-tidycor <- cormat %>%
-    as.data.frame %>%
-    rownames_to_column("var1") %>%
-    pivot_longer(-1, names_to = "var2", values_to = "correlation")
-
-tidycor %>% ggplot(aes(var1, var2, fill=correlation)) +
-    geom_tile() +
-    scale_fill_gradient2(low="red", mid="white", high = "blue") +
-    geom_text(aes(label=round(correlation,2)),color = "black", size = 3.5)+ #overlays correlation values
-    theme(axis.text.x = element_text(angle = 90, hjust = 1)) + #flips the x-axis labels
-    coord_fixed()
-
 # hypotheses: older adults have greater BP and greater blood urea nitrogen
 
-
-
-
+##### Regression for each variable
 
 ## Janice's work
 # Create male and female subsets
@@ -210,11 +190,11 @@ tidycor %>% ggplot(aes(var1, var2, fill=correlation)) +
 # Function to do the correlations for a particular gender
 do_correlations <- function(gender) {
     nhanes_male <- nhanes %>% filter(Gender == gender)
-
+    
     # Albumin - slightly negative for male and female
     nhanes_male %>% ggplot(aes(x = Age, y = Albumin)) + geom_point() + geom_smooth(method =
                                                                                        "lm")
-
+    
     ##... insert other correlations here...
 }
 
@@ -288,4 +268,3 @@ nhanes_female %>% ggplot(aes(x=Age, y=Red_Cell_Distribution_Width)) + geom_point
 # Systolic Blood Pressure - positive for both
 nhanes_male %>% ggplot(aes(x=Age, y=Systolic_Blood_Pressure)) + geom_point() + geom_smooth(method="lm") + ggtitle("Systolic Blood Pressure vs. Age - Male")
 nhanes_female %>% ggplot(aes(x=Age, y=Systolic_Blood_Pressure)) + geom_point() + geom_smooth(method="lm") + ggtitle("Systolic Blood Pressure vs. Age - Female")
-
