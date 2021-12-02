@@ -192,88 +192,48 @@ do_correlations <- function(gender) {
     nhanes_male <- nhanes %>% filter(Gender == gender)
     
     # Albumin - slightly negative for male and female
-    nhanes_male %>% ggplot(aes(x = Age, y = Albumin)) + geom_point() + geom_smooth(method =
-                                                                                       "lm")
-    
-    ##... insert other correlations here...
+    nhanes_male %>% ggplot(aes(x = Age, y = Albumin)) + geom_point() + geom_smooth(method = "lm")
+                                            
 }
 
-do_correlations("Male")
-do_correlations("Female")
 
-#nhanes_male <- nhanes %>% filter(Gender == "Male")
-#nhanes_female <- nhanes %>% filter(Gender == "Female")
 
 do_plot <- function(biomarker) {
     nhanes %>% ggplot(aes(x=Age, y=nhanes[,biomarker])) + geom_point(position="jitter",size=0.7,alpha=0.5) + geom_smooth(method="lm") + ylab(biomarker)
     
 }
 
-do_plot("Albumin")
 
+for (variable in colnames(nhanes[2:15])) {
+    print(do_plot(variable))
+}
 
-# Albumin - slightly negative for male and female
-nhanes %>% ggplot(aes(x=Age, y=Albumin)) + geom_point() + geom_smooth(method="lm")
-nhanes_male %>% ggplot(aes(x=Age, y=Albumin)) + geom_point() + geom_smooth(method="lm")
-nhanes_female %>% ggplot(aes(x=Age, y=Albumin)) + geom_point() + geom_smooth(method="lm")
+# Albumin - negative correlation
+# Alkaline Phosphatase - different for young ages, negative correlation, filter out young ages, remove outliers
+nhanes_25plus %>% filter(Alkaline_Phosphatase < 200) %>% ggplot(aes(x=Age, y=Alkaline_Phosphatase)) + geom_point(position="jitter", size=0.7, alpha=0.5) + geom_smooth(method="lm") + ylab("Alkaline Phosphatase")
 
-# Alkaline Phosphatase - negative for male and tiny bit negative for female
-nhanes_male %>% ggplot(aes(x=Age, y=Alkaline_Phosphatase)) + geom_point() + geom_smooth(method="lm")
-nhanes_female %>% ggplot(aes(x=Age, y=Alkaline_Phosphatase)) + geom_point() + geom_smooth(method="lm")
+# Blood Urea Nitrogen - positive correlation, remove outliers
+nhanes %>% filter(Blood_Urea_Nitrogen < 40) %>% ggplot(aes(x=Age, y=Blood_Urea_Nitrogen)) + geom_point(position="jitter", size=0.7, alpha=0.5) + geom_smooth(method="lm") + ylab("Blood Urea Nitrogen")
 
-# Blood Urea Nitrogen - slightly positive for both
-nhanes_male %>% ggplot(aes(x=Age, y=Blood_Urea_Nitrogen)) + geom_point() + geom_smooth(method="lm") + ggtitle("Blood Urea Nitrogen vs. Age - Male")
-nhanes_female %>% ggplot(aes(x=Age, y=Blood_Urea_Nitrogen)) + geom_point() + geom_smooth(method="lm") + ggtitle("Blood Urea Nitrogen vs. Age - Female")
+# Creatinine - positive correlation, removed outliers
+nhanes %>% filter(Creatinine < 3) %>% ggplot(aes(x=Age, y=Creatinine)) + geom_point(position="jitter", size=0.7, alpha=0.5) + geom_smooth(method="lm") + ylab("Creatinine")
 
-# Creatinine - slightly positive for male and female
-nhanes_male %>% ggplot(aes(x=Age, y=Creatinine)) + geom_point() + geom_smooth(method="lm")
-nhanes_female %>% ggplot(aes(x=Age, y=Creatinine)) + geom_point() + geom_smooth(method="lm")
-nhanes_male %>%  filter(Creatinine < 5) %>% ggplot(aes(x=Age, y=Creatinine)) + geom_point() + geom_smooth(method="lm")
-nhanes_female %>% filter(Creatinine < 3) %>% ggplot(aes(x=Age, y=Creatinine)) + geom_point() + geom_smooth(method="lm")
+# C Reactive Protein - positive correlation, removed outliers 
+nhanes %>% filter(C_Reactive_Protein < 20) %>% ggplot(aes(x=Age, y=C_Reactive_Protein)) + geom_point(position="jitter", size=0.7, alpha=0.5) + geom_smooth(method="lm") + ylab("C Reactive Protein")
 
-# C Reactive Protein - not really a correlation
-nhanes_male %>% ggplot(aes(x=Age, y=C_Reactive_Protein)) + geom_point() + geom_smooth(method="lm")
-nhanes_female %>% ggplot(aes(x=Age, y=C_Reactive_Protein)) + geom_point() + geom_smooth(method="lm")
+# Glucose - positive correlation, removed outliers
+nhanes %>% filter(Glucose < 200) %>% ggplot(aes(x=Age, y=Glucose)) + geom_point(position="jitter", size=0.7, alpha=0.5) + geom_smooth(method="lm") + ylab("Glucose")
 
-nhanes_male %>% filter(C_Reactive_Protein < 50) %>% ggplot(aes(x=Age, y=C_Reactive_Protein)) + geom_point() + geom_smooth(method="lm")
-nhanes_female %>% filter(Creatinine < 50) %>% ggplot(aes(x=Age, y=C_Reactive_Protein)) + geom_point() + geom_smooth(method="lm")
+# Glycohemoglobin - positive correlation
 
-# Glucose - slightly positive correlation for both
-nhanes_male %>% ggplot(aes(x=Age, y=Glucose)) + geom_point() + geom_smooth(method="lm")
-nhanes_female %>% ggplot(aes(x=Age, y=Glucose)) + geom_point() + geom_smooth(method="lm")
+# Total Cholesterol - positive correlation
+# Uric Acid - slightly positive correlation
+# White Blood Cell Count Visualization - slightly negative correlation
+nhanes %>% filter(White_Blood_Cell_Count < 50) %>% ggplot(aes(x=Age, y=White_Blood_Cell_Count)) + geom_point(position="jitter", size=0.7, alpha=0.5) + geom_smooth(method="lm") + ylab("White Blood Cell Count")
 
-# Glycohemoglobin - positive for both
-nhanes_male %>% ggplot(aes(x=Age, y=Glycohemoglobin)) + geom_point() + geom_smooth(method="lm")
-nhanes_female %>% ggplot(aes(x=Age, y=Glycohemoglobin)) + geom_point() + geom_smooth(method="lm")
+# Lymphocyte Percent - slightly different for younger ages, negative correlation 
+nhanes_25plus %>% ggplot(aes(x=Age, y=Lymphocyte_Percent)) + geom_point(position="jitter", size=0.7, alpha=0.5) + geom_smooth(method="lm") + ylab("Lymphocyte Percent")
 
-# Total Cholesterol - slightly positive for male and female
-nhanes_male %>% ggplot(aes(x=Age, y=Total_Cholesterol)) + geom_point() + geom_smooth(method="lm")
-nhanes_female %>% ggplot(aes(x=Age, y=Total_Cholesterol)) + geom_point() + geom_smooth(method="lm")
-
-# Uric Acid - no correlation for male, positive for female
-nhanes_male %>% ggplot(aes(x=Age, y=Uric_Acid)) + geom_point() + geom_smooth(method="lm")
-nhanes_female %>% ggplot(aes(x=Age, y=Uric_Acid)) + geom_point() + geom_smooth(method="lm")
-
-# White Blood Cell Count Visualization - no correlation or tiny bit negative for both
-nhanes %>% arrange(desc(White_Blood_Cell_Count)) # to see highest/outliers for WBC
-nhanes %>% ggplot(aes(x=Age)) + geom_point(aes(y=White_Blood_Cell_Count))
-nhanes %>% filter(White_Blood_Cell_Count < 50) %>% ggplot(aes(x=Age)) + geom_point(aes(y=White_Blood_Cell_Count))
-nhanes %>% filter(White_Blood_Cell_Count < 30) %>% ggplot(aes(x=Age, y=White_Blood_Cell_Count)) + geom_point() + geom_smooth(method="lm")
-nhanes_male %>% filter(White_Blood_Cell_Count < 50) %>% ggplot(aes(x=Age, y=White_Blood_Cell_Count)) + geom_point() + geom_smooth(method="lm")
-nhanes_female %>% filter(White_Blood_Cell_Count < 30) %>% ggplot(aes(x=Age, y=White_Blood_Cell_Count)) + geom_point() + geom_smooth(method="lm")
-
-# Lymphocyte Percent - slightly negative for male and female
-nhanes_male %>% ggplot(aes(x=Age, y=Lymphocyte_Percent)) + geom_point() + geom_smooth(method="lm")
-nhanes_female %>% ggplot(aes(x=Age, y=Lymphocyte_Percent)) + geom_point() + geom_smooth(method="lm")
-
-# Mean Cell Volume - positive for both
-nhanes_male %>% ggplot(aes(x=Age, y=Mean_Cell_Volume)) + geom_point() + geom_smooth(method="lm")
-nhanes_female %>% ggplot(aes(x=Age, y=Mean_Cell_Volume)) + geom_point() + geom_smooth(method="lm")
-
-# Red Cell Distribution Width - slightly positive for male, no correlation for female
-nhanes_male %>% ggplot(aes(x=Age, y=Red_Cell_Distribution_Width)) + geom_point() + geom_smooth(method="lm")
-nhanes_female %>% ggplot(aes(x=Age, y=Red_Cell_Distribution_Width)) + geom_point() + geom_smooth(method="lm")
-
-# Systolic Blood Pressure - positive for both
-nhanes_male %>% ggplot(aes(x=Age, y=Systolic_Blood_Pressure)) + geom_point() + geom_smooth(method="lm") + ggtitle("Systolic Blood Pressure vs. Age - Male")
-nhanes_female %>% ggplot(aes(x=Age, y=Systolic_Blood_Pressure)) + geom_point() + geom_smooth(method="lm") + ggtitle("Systolic Blood Pressure vs. Age - Female")
+# Mean Cell Volume - positive correlation
+# Red Cell Distribution Width - positive correlation
+# Systolic Blood Pressure  - positive correlation
