@@ -69,8 +69,6 @@ nhanes$Gender <- nhanes$Gender %>% str_replace("2", "Female")
 #Exclude under 25 
 #nhanes_25plus <- nhanes %>% filter(Age > 25)
 
-# Make scaled version of nhanes.  Keep raw data in case need to present.
-nhanes_scaled <- nhanes %>% mutate_at(vars(-Gender, -ID), scale)
 
 # Number of individuals after data cleaned
 nrow(nhanes)
@@ -91,14 +89,11 @@ min_age = min(nhanes$Age)
 
 # Function for regression plot of variable vs. age
 do_plot <- function(biomarker) {
-    lower.cut = quantile(nhanes$biomarker, 0.02)  
-    upper.cut = quantile(nhanes$biomarker, 0.98) 
+    lower.cut = quantile(nhanes[,biomarker], 0.02)  
+    upper.cut = quantile(nhanes[,biomarker], 0.98) 
     nhanes %>% ggplot(aes(x=Age, y=nhanes[,biomarker])) + geom_point(position="jitter",size=0.7,alpha=0.5) + 
     geom_smooth(method="lm") + ylab(biomarker) + scale_x_continuous(breaks = seq(from = min_age, to = 79, by = 10)) + 
-    coord_cartesian(ylim = c(-lower.cut*1.1, upper.cut*1.1))
-    # scale_y_continuous(limits = c(-lower.cut*1.1, upper.cut*1.1)) 
-    #Tried 2 ways and neither worked
-    # summary(lm(nhanes$Age~nhanes$biomarker))
+    coord_cartesian(ylim = c(lower.cut*.9, upper.cut*1.1))
 }
 
 # for loop to generate regression plots for all continuous variables
@@ -107,9 +102,17 @@ for (variable in colnames(nhanes[2:n])) {
     print(do_plot(variable))
 }
 
-# TRIED TO MODIFY AND INSERT INT0 FUNCTION ABOVE BUT DIDN'T WORK
+# Modify and put in function????
 summary(lm(nhanes$Age~nhanes$Glucose))
 
+
+##### 2nd cleaning and data prep
+
+# This variable exhibits different behavior before and after age 20 so it's removed
+nhanes <- nhanes %>% select(-Alkaline_Phosphatase)
+
+# Make scaled version of nhanes.  Keep raw data in case need to present.
+nhanes_scaled <- nhanes %>% mutate_at(vars(-Gender, -ID), scale)
 
 ##### Correlation Matrix
 
