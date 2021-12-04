@@ -139,10 +139,10 @@ tidycor %>% ggplot(aes(var1, var2, fill=correlation)) +
 ##### Clustering: is clustering the best way to analyze the data?
 
 # Does Blood Pressure cluster on Gender
-nhanes2_scaled %>% ggplot(aes(Age, Systolic_Blood_Pressure, col=Gender)) + geom_point()
+nhanes2 %>% ggplot(aes(Age, Systolic_Blood_Pressure, col=Gender)) + geom_point()
 
 # Does the data form clusters at all?
-clust_dat<- nhanes2_scaled %>% select(Age, Systolic_Blood_Pressure)
+clust_dat<- nhanes2 %>% select(Age, Systolic_Blood_Pressure)
 
 sil_width<-vector() #empty vector to hold mean sil width
 
