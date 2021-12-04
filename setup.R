@@ -66,10 +66,6 @@ nhanes %>% mutate(Gender = as.factor(Gender))
 nhanes$Gender <- nhanes$Gender %>% str_replace("1", "Male")
 nhanes$Gender <- nhanes$Gender %>% str_replace("2", "Female")
 
-#Exclude under 25 
-#nhanes_25plus <- nhanes %>% filter(Age > 25)
-
-
 # Number of individuals after data cleaned
 nrow(nhanes)
 
@@ -111,12 +107,20 @@ summary(lm(nhanes$Age~nhanes$Glucose))
 # This variable exhibits different behavior before and after age 20 so it's removed
 nhanes <- nhanes %>% select(-Alkaline_Phosphatase)
 
-# Make scaled version of nhanes.  Keep raw data in case need to present.
-nhanes_scaled <- nhanes %>% mutate_at(vars(-Gender, -ID), scale)
+# nhanes2 (the final cleaned version) will be used from now on.
+nhanes2 <- nhanes
+
+# Create nhanes2.csv for use in Python
+
+write.csv(nhanes2,'~/aging-biomarkers/nhanes2.csv')
+
+# Make scaled version of nhanes2.  Keep raw data in case need to present.
+nhanes2_scaled <- nhanes2 %>% mutate_at(vars(-Gender, -ID), scale)
+
 
 ##### Correlation Matrix
 
-cormat <- nhanes_scaled %>% select(-Gender, -ID) %>% cor()
+cormat <- nhanes2_scaled %>% select(-Gender, -ID) %>% cor()
 cormat %>% as.data.frame %>% rownames_to_column("var1")
 
 tidycor <- cormat %>%
@@ -135,10 +139,10 @@ tidycor %>% ggplot(aes(var1, var2, fill=correlation)) +
 ##### Clustering: is clustering the best way to analyze the data?
 
 # Does Blood Pressure cluster on Gender
-nhanes_scaled %>% ggplot(aes(Age, Systolic_Blood_Pressure, col=Gender)) + geom_point()
+nhanes2_scaled %>% ggplot(aes(Age, Systolic_Blood_Pressure, col=Gender)) + geom_point()
 
 # Does the data form clusters at all?
-clust_dat<- nhanes_scaled %>% select(Age, Systolic_Blood_Pressure)
+clust_dat<- nhanes2_scaled %>% select(Age, Systolic_Blood_Pressure)
 
 sil_width<-vector() #empty vector to hold mean sil width
 
@@ -161,7 +165,7 @@ kmeansclust %>% ggplot(aes(Age, Systolic_Blood_Pressure, color=cluster)) + geom_
 ##### PCA
 
 # Systolic Blood Pressure is just one variable.  What if we look at all of them using PCA?
-pca <- nhanes_scaled %>% select(-ID, -Age, -Gender) %>% prcomp(scale=TRUE) 
+pca <- nhanes2_scaled %>% select(-ID, -Age, -Gender) %>% prcomp(scale=TRUE) 
 
 # Loading score: how much original variable contributes to PC1
 loading_scores <- pca$rotation[,1]
@@ -181,11 +185,11 @@ y <- pca_var_per[1:10]
 text(x,y+1,labels=as.character(y))
 
 # Binds PCA data to original variables Age and Gender
-pca_nhanes <- nhanes %>% select(ID, Age, Gender) %>% cbind(pca$x[,1:3])
+pca_nhanes2 <- nhanes2 %>% select(ID, Age, Gender) %>% cbind(pca$x[,1:3])
 
 # Plots PC1 vs. PC2
 # Does Age form obvious clusters in PC space?
-ggplot(pca_nhanes, aes(PC1, PC2, col=Age)) +
+ggplot(pca_nhanes2, aes(PC1, PC2, col=Age)) +
     geom_point() +
     xlab(paste("PC1 - ", pca_var_per[1], "%", sep="")) +
     ylab(paste("PC2 - ", pca_var_per[2], "%", sep="")) +
@@ -195,7 +199,7 @@ ggplot(pca_nhanes, aes(PC1, PC2, col=Age)) +
 ##### PCA Clustering
 
 # Does the data form clusters in PC space?
-clust_dat<- pca_nhanes %>% select(PC1,PC2)
+clust_dat<- pca_nhanes2 %>% select(PC1,PC2)
 
 sil_width<-vector() #empty vector to hold mean sil width
 
@@ -210,7 +214,7 @@ ggplot() +
     scale_x_continuous(name="k",breaks=1:10)
 
 kmeans1 <- clust_dat %>% kmeans(2)
-kmeansclust <- clust_dat %>% mutate(cluster=as.factor(kmeans1$cluster), Age=nhanes$Age)
+kmeansclust <- clust_dat %>% mutate(cluster=as.factor(kmeans1$cluster), Age=nhanes2$Age)
 kmeansclust %>% ggplot(aes(PC1, PC2, col=cluster)) + geom_point()
 
 
