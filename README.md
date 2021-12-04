@@ -1,50 +1,29 @@
-SDS 322E Project: Aging Biomarkers
+SDS 322E Project and Project Description
 ================
-Erin Pennington, Bella Vincent, Janice Oh, Anthony Tang, James Groh,
-Jilliane Lagus
-10/25/2021
+Erin Pennington, Bella Vincent, Janice Oh, Anthony Tang, James Groh, Jilliane Lagus
+Fall 2021
 
-## Project Title
+# Project Title: Aging Biomarkers
 
-Aging Biomarkers
+## Motivation
 
-## Project Description
+The global aging population is projected to triple between 2017 and 2050, increasing from 137 million to 425 million. Aging overall costs the economy $36 billion dollars a year in terms of pension, aging care, and health services. To contribute to insights about health and aging, as well as produce an age-prediction model based on health markers, our overall project goal involves exploring relationships between biomarkers and related survey data and age to provide insights on health and age and possibly create a prediction model for age based on biomarkers.
 
-Our project goals are to explore the relationships between biomarkers or
-other survey data and age.
+## Objectives
+- Part I: Explore aspects (e.g., socioeconomic status, demographics) or biomarkers (e.g. blood pressure, oral health, etc.) in relation to age and age categories (early aging, middle aging, late aging).
+- Part II: Determine significant biomarkers that can be used in a regression to predict the biological age of an individual. 
 
-In Part I, we plan to explore aspects (e.g., socioeconomic
-status, demographics) or biomarkers (e.g. blood pressure, oral health, etc.) in relation to age and age categories (early aging, middle aging, late aging).
+## Background
 
-In Part II, the tentative plan is to determine significant
-biomarkers that can be used in a regression to predict the biological
-age of an individual. For example, perhaps a marker such as blood
-pressure might indicate that a person might be at risk for suffering
-age-related complications sooner in life.
-
-## Link to Dataset
-
-<https://wwwn.cdc.gov/nchs/nhanes/continuousnhanes/default.aspx?BeginYear=2017>
+A study by Hastings et al. (2019) <https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6599717/> in "Psychoneuroendrocrinology" theorized that modifying biological processes will modify the causes of different chronic diseases, therefore, the outcomes of these disease processes (as we age). While the Hastings project focused on and reported that cellular-level markers (e.g. telomere length) are  more informative than patient-level physiological measures, our study focused on biomarker laboratory test results and demographic data.
 
 ## Dataset Description
 
-The National Health and Nutrition Examination Survey (NHANES) contains
-multiple studies assessing health and nutrition of adults and children
-in the United States. It offers a number of different data files
-containing interview results and physical examinations, for example lab
-test results.
+The National Health and Nutrition Examination Survey (NHANES) contains multiple studies assessing health and nutrition of adults and children in the United States. It offers a number of different survey result data files containing interview results, physical examinations, and laboratory test results. Our study focused on the NHANES 2017-2018 dataset, specifically Demographic Data for adults and aging population and Laboratory test results.
 
-We will be downloading a subset of these data files for our exploratory
-analysis based on which variables are interesting to us.
+# Link to Dataset
 
-# Additional Info
-
-This review article provided the inspiration for determining biological
-age as a function of biomarkers available from test results. Their
-methods will differ from ours, but it provides some starting points for
-which biomarkers might be of interest to us.
-
-<https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6599717/>
+<https://wwwn.cdc.gov/nchs/nhanes/continuousnhanes/default.aspx?BeginYear=2017>
 
 # Github Repository
 
