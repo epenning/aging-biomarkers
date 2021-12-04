@@ -131,7 +131,7 @@ tidycor <- cormat %>%
 tidycor %>% ggplot(aes(var1, var2, fill=correlation)) +
     geom_tile() +
     scale_fill_gradient2(low="red", mid="white", high = "blue") +
-    geom_text(aes(label=round(correlation,2)),color = "black", size = 3.5)+ #overlays correlation values
+    geom_text(aes(label=round(correlation,2)),color = "black", size = 2.5)+ #overlays correlation values
     theme(axis.text.x = element_text(angle = 90, hjust = 1)) + #flips the x-axis labels
     coord_fixed()
 
