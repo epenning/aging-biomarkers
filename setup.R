@@ -101,23 +101,19 @@ for (variable in colnames(nhanes[2:n])) {
 ##### 2nd cleaning and data prep
 
 # This variable exhibits different behavior before and after age 20 so it's removed
+nhanes_original <- nhanes
 nhanes <- nhanes %>% select(-Alkaline_Phosphatase)
 
-# nhanes2 (the final cleaned version) will be used from now on.
-nhanes2 <- nhanes
+# Output cleaned nhanes data for use in Python
+write.csv(nhanes,'nhanes_data.csv')
 
-# Create nhanes2.csv for use in Python
-
-write.csv(nhanes2,'~/aging-biomarkers/nhanes2.csv')
-
-# Make scaled version of nhanes2.  Keep raw data in case need to present.
-nhanes2_scaled <- nhanes2 %>% mutate_at(vars(-Gender, -ID), scale)
+# Make scaled version of nhanes
+nhanes_scaled <- nhanes %>% mutate_at(vars(-Gender, -ID), scale)
 
 
 ##### Correlation Matrix
 
-cormat <- nhanes2_scaled %>% select(-Gender, -ID) %>% cor()
-cormat %>% as.data.frame %>% rownames_to_column("var1")
+cormat <- nhanes %>% select(-Gender, -ID) %>% cor()
 
 tidycor <- cormat %>%
     as.data.frame %>%
@@ -135,10 +131,10 @@ tidycor %>% ggplot(aes(var1, var2, fill=correlation)) +
 ##### Clustering: is clustering the best way to analyze the data?
 
 # Does Blood Pressure cluster on Gender
-nhanes2_scaled %>% ggplot(aes(Age, Systolic_Blood_Pressure, col=Gender)) + geom_point()
+nhanes_scaled %>% ggplot(aes(Age, Systolic_Blood_Pressure, col=Gender)) + geom_point()
 
 # Does the data form clusters at all?
-clust_dat<- nhanes2_scaled %>% select(Age, Systolic_Blood_Pressure)
+clust_dat<- nhanes_scaled %>% select(Age, Systolic_Blood_Pressure)
 
 sil_width<-vector() #empty vector to hold mean sil width
 
@@ -148,20 +144,20 @@ for(i in 2:10){
     sil_width[i]<-mean(sil[,3]) #take averages (higher is better)
 }
 
-# Silhouette plot: gives 2 as number of clusters
+# Silhouette plot: gives 6 as number of clusters
 ggplot() +
     geom_line(aes(x=1:10,y=sil_width)) +
     scale_x_continuous(name="k",breaks=1:10)
 
-# Use result from silhouette plot.  How does 2 clusters look?
-kmeans1 <- clust_dat %>% kmeans(2)
-kmeansclust <- clust_dat %>% mutate(cluster=as.factor(kmeans1$cluster))
+# Use result from silhouette plot.  How does 6 clusters look?
+kmeans <- clust_dat %>% kmeans(6)
+kmeansclust <- clust_dat %>% mutate(cluster=as.factor(kmeans$cluster))
 kmeansclust %>% ggplot(aes(Age, Systolic_Blood_Pressure, color=cluster)) + geom_point()
 
 ##### PCA
 
 # Systolic Blood Pressure is just one variable.  What if we look at all of them using PCA?
-pca <- nhanes2_scaled %>% select(-ID, -Age, -Gender) %>% prcomp(scale=TRUE)
+pca <- nhanes_scaled %>% select(-ID, -Age, -Gender) %>% prcomp(scale=TRUE)
 
 # Loading score: how much original variable contributes to PC1
 loading_scores <- pca$rotation[,1]
@@ -181,11 +177,11 @@ y <- pca_var_per[1:10]
 text(x,y+1,labels=as.character(y))
 
 # Binds PCA data to original variables Age and Gender
-pca_nhanes2 <- nhanes2 %>% select(ID, Age, Gender) %>% cbind(pca$x[,1:3])
+pca_nhanes <- nhanes %>% select(ID, Age, Gender) %>% cbind(pca$x[,1:3])
 
 # Plots PC1 vs. PC2
 # Does Age form obvious clusters in PC space?
-ggplot(pca_nhanes2, aes(PC1, PC2, col=Age)) +
+ggplot(pca_nhanes, aes(PC1, PC2, col=Age)) +
     geom_point() +
     xlab(paste("PC1 - ", pca_var_per[1], "%", sep="")) +
     ylab(paste("PC2 - ", pca_var_per[2], "%", sep="")) +
@@ -195,7 +191,7 @@ ggplot(pca_nhanes2, aes(PC1, PC2, col=Age)) +
 ##### PCA Clustering
 
 # Does the data form clusters in PC space?
-clust_dat<- pca_nhanes2 %>% select(PC1,PC2)
+clust_dat<- pca_nhanes %>% select(PC1,PC2)
 
 sil_width<-vector() #empty vector to hold mean sil width
 
@@ -209,25 +205,20 @@ ggplot() +
     geom_line(aes(x=1:10,y=sil_width)) +
     scale_x_continuous(name="k",breaks=1:10)
 
-kmeans1 <- clust_dat %>% kmeans(2)
-kmeansclust <- clust_dat %>% mutate(cluster=as.factor(kmeans1$cluster), Age=nhanes2$Age)
+kmeans <- clust_dat %>% kmeans(3)
+kmeansclust <- clust_dat %>% mutate(cluster=as.factor(kmeans$cluster), Age=nhanes$Age)
 kmeansclust %>% ggplot(aes(PC1, PC2, col=cluster)) + geom_point()
 
 
-##### Anthony
+##### (Anthony) Examine correlations excluding outliers
 
+# Hypothesis: older adults have greater BP and greater blood urea nitrogen
 
-# hypotheses: older adults have greater BP and greater blood urea nitrogen
-
-
-
-
-
-
+nhanes_original_25plus <- nhanes_original %>% filter(Age >= 25)
 
 # Albumin - negative correlation
 # Alkaline Phosphatase - different for young ages, negative correlation, filter out young ages, remove outliers
-nhanes_25plus %>% filter(Alkaline_Phosphatase < 200) %>% ggplot(aes(x=Age, y=Alkaline_Phosphatase)) + geom_point(position="jitter", size=0.7, alpha=0.5) + geom_smooth(method="lm") + ylab("Alkaline Phosphatase")
+nhanes_original_25plus %>% filter(Alkaline_Phosphatase < 200) %>% ggplot(aes(x=Age, y=Alkaline_Phosphatase)) + geom_point(position="jitter", size=0.7, alpha=0.5) + geom_smooth(method="lm") + ylab("Alkaline Phosphatase")
 
 # Blood Urea Nitrogen - positive correlation, remove outliers
 nhanes %>% filter(Blood_Urea_Nitrogen < 40) %>% ggplot(aes(x=Age, y=Blood_Urea_Nitrogen)) + geom_point(position="jitter", size=0.7, alpha=0.5) + geom_smooth(method="lm") + ylab("Blood Urea Nitrogen")
@@ -249,7 +240,7 @@ nhanes %>% filter(Glucose < 200) %>% ggplot(aes(x=Age, y=Glucose)) + geom_point(
 nhanes %>% filter(White_Blood_Cell_Count < 50) %>% ggplot(aes(x=Age, y=White_Blood_Cell_Count)) + geom_point(position="jitter", size=0.7, alpha=0.5) + geom_smooth(method="lm") + ylab("White Blood Cell Count")
 
 # Lymphocyte Percent - slightly different for younger ages, negative correlation
-nhanes_25plus %>% ggplot(aes(x=Age, y=Lymphocyte_Percent)) + geom_point(position="jitter", size=0.7, alpha=0.5) + geom_smooth(method="lm") + ylab("Lymphocyte Percent")
+nhanes_original_25plus %>% ggplot(aes(x=Age, y=Lymphocyte_Percent)) + geom_point(position="jitter", size=0.7, alpha=0.5) + geom_smooth(method="lm") + ylab("Lymphocyte Percent")
 
 # Mean Cell Volume - positive correlation
 # Red Cell Distribution Width - positive correlation
