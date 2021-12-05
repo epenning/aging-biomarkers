@@ -81,7 +81,7 @@ nhanes %>% ggplot(aes(x = Age)) + geom_histogram(stat = "count")
 
 min_age = min(nhanes$Age)
 
-# Function for regression plot of variable vs. age
+# Function for scatterplot of variable vs. age
 do_plot <- function(biomarker) {
     lower.cut = quantile(nhanes[, biomarker], 0.02)
     upper.cut = quantile(nhanes[, biomarker], 0.98)
@@ -96,7 +96,7 @@ do_plot <- function(biomarker) {
     print(summary(lm(nhanes$Age ~ nhanes[, biomarker])))
 }
 
-# Generate regression plots for all continuous variables
+# Generate scatterplots for all continuous variables
 # Age and Gender are last 2 variables, don't plot those
 # ID is the first variable, don't plot it
 n <- ncol(nhanes) - 2
