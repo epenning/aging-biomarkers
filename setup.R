@@ -85,13 +85,13 @@ min_age = min(nhanes$Age)
 do_plot <- function(biomarker) {
     lower.cut = quantile(nhanes[, biomarker], 0.02)
     upper.cut = quantile(nhanes[, biomarker], 0.98)
-    nhanes %>% ggplot(aes(x = Age, y = nhanes[, biomarker])) +
+    print(nhanes %>% ggplot(aes(x = Age, y = nhanes[, biomarker])) +
         geom_point(position = "jitter",
                    size = 0.7,
                    alpha = 0.5) +
         geom_smooth(method = "lm") + ylab(biomarker) +
         scale_x_continuous(breaks = seq(from = min_age, to = 79, by = 10)) +
-        coord_cartesian(ylim = c(lower.cut * .9, upper.cut * 1.1))
+        coord_cartesian(ylim = c(lower.cut * .9, upper.cut * 1.1)))
     print(paste(biomarker, "Correlation with Age:"))
     print(summary(lm(nhanes$Age ~ nhanes[, biomarker])))
 }
@@ -158,7 +158,7 @@ ggplot() +
     scale_x_continuous(name = "k", breaks = 1:10)
 
 # Use result from silhouette plot.  How does 6 clusters look?
-kmeans <- clust_dat %>% kmeans(6)
+kmeans <- clust_dat %>% kmeans(2)
 kmeansclust <-
     clust_dat %>% mutate(cluster = as.factor(kmeans$cluster))
 kmeansclust %>% ggplot(aes(Age, Systolic_Blood_Pressure, color = cluster)) +
@@ -224,7 +224,7 @@ ggplot() +
     geom_line(aes(x = 1:10, y = sil_width)) +
     scale_x_continuous(name = "k", breaks = 1:10)
 
-kmeans <- clust_dat %>% kmeans(3)
+kmeans <- clust_dat %>% kmeans(2)
 kmeansclust <- clust_dat %>%
     mutate(cluster = as.factor(kmeans$cluster), Age = nhanes$Age)
 kmeansclust %>% ggplot(aes(PC1, PC2, col = cluster)) +
