@@ -14,7 +14,6 @@ cReactive <- read_xpt("HSCRP_J.XPT")
 glycohemoglobin <- read_xpt("GHB_J.XPT")
 bloodCount <- read_xpt("CBC_J.XPT")
 bloodPressure <- read_xpt("BPX_J.XPT")
-healthStatus <- read_xpt("HSQ_J.XPT")
 
 # Merge data
 nhanes <- merge(demographics, biochemistry, by = "SEQN")
@@ -22,7 +21,6 @@ nhanes <- merge(nhanes, cReactive, by = "SEQN")
 nhanes <- merge(nhanes, glycohemoglobin, by = "SEQN")
 nhanes <- merge(nhanes, bloodCount, by = "SEQN")
 nhanes <- merge(nhanes, bloodPressure, by = "SEQN")
-nhanes <- merge(nhanes, healthStatus, by = "SEQN")
 
 # Get mean systolic blood pressure
 nhanes$BPXSY_MEAN <-
@@ -46,10 +44,8 @@ nhanes <-
         Mean_Cell_Volume = "LBXMCVSI",
         Red_Cell_Distribution_Width = "LBXRDW",
         Systolic_Blood_Pressure = "BPXSY_MEAN",
-        #        Health_Status = "HSD010",
         Age = "RIDAGEYR",
-        Gender = "RIAGENDR",
-        #        Income_Ratio = "INDFMPIR"   # Ratio of Income to Poverty, thought about adding but didn't
+        Gender = "RIAGENDR"
     )
 
 ##### Clean data
@@ -58,11 +54,10 @@ nhanes <-
 nrow(nhanes)
 
 # Age missing is coded as ".".  Age is topcoded at 80.  Both these type of entries are removed.
-# Entries containing NA's are removed.
+# Entries containing NA are removed.
 nhanes <- nhanes %>% filter(is.numeric(Age)) %>% na.omit() %>% filter(Age != 80)
 
 # Gender is reclassified from 1 and 2 to Male and Female to make the data clearer.
-nhanes %>% mutate(Gender = as.factor(Gender))
 nhanes$Gender <- nhanes$Gender %>% str_replace("1", "Male")
 nhanes$Gender <- nhanes$Gender %>% str_replace("2", "Female")
 
@@ -79,27 +74,28 @@ range(nhanes$Age)
 nhanes %>% ggplot(aes(x=Age)) + geom_histogram(stat = "count")
 
 
-##### Regression for each variable
+##### Regression for each variable with age. What are the relationships?
 
 min_age = min(nhanes$Age)
 
 # Function for regression plot of variable vs. age
 do_plot <- function(biomarker) {
-    lower.cut = quantile(nhanes[,biomarker], 0.02)  
-    upper.cut = quantile(nhanes[,biomarker], 0.98) 
-    nhanes %>% ggplot(aes(x=Age, y=nhanes[,biomarker])) + geom_point(position="jitter",size=0.7,alpha=0.5) + 
-    geom_smooth(method="lm") + ylab(biomarker) + scale_x_continuous(breaks = seq(from = min_age, to = 79, by = 10)) + 
+    lower.cut = quantile(nhanes[,biomarker], 0.02)
+    upper.cut = quantile(nhanes[,biomarker], 0.98)
+    nhanes %>% ggplot(aes(x=Age, y=nhanes[,biomarker])) + geom_point(position="jitter",size=0.7,alpha=0.5) +
+    geom_smooth(method="lm") + ylab(biomarker) + scale_x_continuous(breaks = seq(from = min_age, to = 79, by = 10)) +
     coord_cartesian(ylim = c(lower.cut*.9, upper.cut*1.1))
+    print(paste(biomarker, "Correlation with Age:"))
+    print(summary(lm(nhanes$Age~nhanes[,biomarker])))
 }
 
-# for loop to generate regression plots for all continuous variables
+# Generate regression plots for all continuous variables
+# Age and Gender are last 2 variables, don't plot those
+# ID is the first variable, don't plot it
 n <- ncol(nhanes)-2
 for (variable in colnames(nhanes[2:n])) {
-    print(do_plot(variable))
+    do_plot(variable)
 }
-
-# Modify and put in function????
-summary(lm(nhanes$Age~nhanes$Glucose))
 
 
 ##### 2nd cleaning and data prep
@@ -153,7 +149,7 @@ for(i in 2:10){
 }
 
 # Silhouette plot: gives 2 as number of clusters
-ggplot() + 
+ggplot() +
     geom_line(aes(x=1:10,y=sil_width)) +
     scale_x_continuous(name="k",breaks=1:10)
 
@@ -165,7 +161,7 @@ kmeansclust %>% ggplot(aes(Age, Systolic_Blood_Pressure, color=cluster)) + geom_
 ##### PCA
 
 # Systolic Blood Pressure is just one variable.  What if we look at all of them using PCA?
-pca <- nhanes2_scaled %>% select(-ID, -Age, -Gender) %>% prcomp(scale=TRUE) 
+pca <- nhanes2_scaled %>% select(-ID, -Age, -Gender) %>% prcomp(scale=TRUE)
 
 # Loading score: how much original variable contributes to PC1
 loading_scores <- pca$rotation[,1]
@@ -178,7 +174,7 @@ loading_score_ranked
 # Makes a scree plot for PC 1-10.  How much variance in the data does each PC explain
 pca_var <- pca$sdev^2
 pca_var_per <- round(pca_var/sum(pca_var)*100, 1)
-x <- barplot(pca_var_per[1:10], 
+x <- barplot(pca_var_per[1:10],
              main="Scree Plot", xlab="Principal Component", ylab="Percent Variation",
              ylim=c(0,25))
 y <- pca_var_per[1:10]
@@ -209,7 +205,7 @@ for(i in 2:10){
     sil_width[i]<-mean(sil[,3]) #take averages (higher is better)
 }
 
-ggplot() + 
+ggplot() +
     geom_line(aes(x=1:10,y=sil_width)) +
     scale_x_continuous(name="k",breaks=1:10)
 
@@ -239,7 +235,7 @@ nhanes %>% filter(Blood_Urea_Nitrogen < 40) %>% ggplot(aes(x=Age, y=Blood_Urea_N
 # Creatinine - positive correlation, removed outliers
 nhanes %>% filter(Creatinine < 3) %>% ggplot(aes(x=Age, y=Creatinine)) + geom_point(position="jitter", size=0.7, alpha=0.5) + geom_smooth(method="lm") + ylab("Creatinine")
 
-# C Reactive Protein - positive correlation, removed outliers 
+# C Reactive Protein - positive correlation, removed outliers
 nhanes %>% filter(C_Reactive_Protein < 20) %>% ggplot(aes(x=Age, y=C_Reactive_Protein)) + geom_point(position="jitter", size=0.7, alpha=0.5) + geom_smooth(method="lm") + ylab("C Reactive Protein")
 
 # Glucose - positive correlation, removed outliers
@@ -252,7 +248,7 @@ nhanes %>% filter(Glucose < 200) %>% ggplot(aes(x=Age, y=Glucose)) + geom_point(
 # White Blood Cell Count Visualization - slightly negative correlation
 nhanes %>% filter(White_Blood_Cell_Count < 50) %>% ggplot(aes(x=Age, y=White_Blood_Cell_Count)) + geom_point(position="jitter", size=0.7, alpha=0.5) + geom_smooth(method="lm") + ylab("White Blood Cell Count")
 
-# Lymphocyte Percent - slightly different for younger ages, negative correlation 
+# Lymphocyte Percent - slightly different for younger ages, negative correlation
 nhanes_25plus %>% ggplot(aes(x=Age, y=Lymphocyte_Percent)) + geom_point(position="jitter", size=0.7, alpha=0.5) + geom_smooth(method="lm") + ylab("Lymphocyte Percent")
 
 # Mean Cell Volume - positive correlation
