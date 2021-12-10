@@ -8,12 +8,12 @@ library(tidyverse)
 ##### Import and create dataset nhanes
 
 # Read data
-demographics <- read_xpt("DEMO_J.XPT")
-biochemistry <- read_xpt("BIOPRO_J.XPT")
-cReactive <- read_xpt("HSCRP_J.XPT")
-glycohemoglobin <- read_xpt("GHB_J.XPT")
-bloodCount <- read_xpt("CBC_J.XPT")
-bloodPressure <- read_xpt("BPX_J.XPT")
+demographics <- read_xpt("aging-biomarkers/DEMO_J.XPT")
+biochemistry <- read_xpt("aging-biomarkers/BIOPRO_J.XPT")
+cReactive <- read_xpt("aging-biomarkers/HSCRP_J.XPT")
+glycohemoglobin <- read_xpt("aging-biomarkers/GHB_J.XPT")
+bloodCount <- read_xpt("aging-biomarkers/CBC_J.XPT")
+bloodPressure <- read_xpt("aging-biomarkers/BPX_J.XPT")
 
 # Merge data
 nhanes <- merge(demographics, biochemistry, by = "SEQN")
