@@ -87,9 +87,7 @@ do_plot <- function(biomarker) {
   lower.cut = quantile(nhanes[, biomarker], 0.02)
   upper.cut = quantile(nhanes[, biomarker], 0.98)
   print(nhanes %>% ggplot(aes(x = Age, y = nhanes[, biomarker])) +
-          geom_point(position = "jitter",
-                     size = 0.7,
-                     alpha = 0.5) +
+          geom_point(position = "jitter", size = 0.7, alpha = 0.5) +
           geom_smooth(method = "lm") + ylab(biomarker) +
           scale_x_continuous(breaks = seq(from = min_age, to = 79, by = 10)) +
           coord_cartesian(ylim = c(lower.cut * .9, upper.cut * 1.1)))
@@ -131,22 +129,19 @@ tidycor <- cormat %>%
 tidycor %>% ggplot(aes(var1, var2, fill = correlation)) +
   geom_tile() +
   scale_fill_gradient2(low = "red", mid = "white", high = "blue") +
-  geom_text(aes(label = round(correlation, 2)), color = "black", size = 2.5) + #overlays correlation values
-  theme(axis.text.x = element_text(angle = 90, hjust = 1)) + #flips the x-axis labels
+  geom_text(aes(label = round(correlation, 2)), color = "black", size = 2.5) + # overlays correlation values
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) + # flips the x-axis labels
   coord_fixed()
 
 
 ##### Clustering: is clustering the best way to analyze the data?
 
 # Do Blood Pressure and Blood Urea Nitrogen show obvious clusters on Age?
-nhanes %>% ggplot(aes(Systolic_Blood_Pressure, Blood_Urea_Nitrogen, col = Age)) +
-  geom_point()
+nhanes %>% ggplot(aes(Systolic_Blood_Pressure, Blood_Urea_Nitrogen, col = Age)) + geom_point()
 
 # Do Blood Pressure and Blood Urea Nitrogen form true clusters at all?
 clust_dat <- nhanes %>% select(Systolic_Blood_Pressure, Blood_Urea_Nitrogen)
-
 sil_width <- vector() #empty vector to hold mean sil width
-
 for (i in 2:10) {
   kms <- kmeans(clust_dat, centers = i) #compute k-means solution
   sil <- silhouette(kms$cluster, dist(clust_dat)) #get sil widths
@@ -154,16 +149,12 @@ for (i in 2:10) {
 }
 
 # Silhouette plot: gives 2 as number of clusters
-ggplot() +
-  geom_line(aes(x = 1:10, y = sil_width)) +
-  scale_x_continuous(name = "k", breaks = 1:10)
+ggplot() + geom_line(aes(x = 1:10, y = sil_width)) + scale_x_continuous(name = "k", breaks = 1:10)
 
-# Use result from silhouette plot.  How does 6 clusters look?
+# Use result from silhouette plot.  How does 2 clusters look?
 kmeans <- clust_dat %>% kmeans(2)
-kmeansclust <-
-  clust_dat %>% mutate(cluster = as.factor(kmeans$cluster))
-kmeansclust %>% ggplot(aes(Age, Systolic_Blood_Pressure, color = cluster)) +
-  geom_point()
+kmeansclust <- clust_dat %>% mutate(cluster = as.factor(kmeans$cluster))
+kmeansclust %>% ggplot(aes(Systolic_Blood_Pressure, Blood_Urea_Nitrogen, col = cluster)) + geom_point()
 
 ##### PCA
 
@@ -211,25 +202,21 @@ ggplot(pca_nhanes, aes(PC1, PC2, col = Age)) +
 ##### PCA Clustering
 
 # Does the data form clusters in PC space?
-clust_dat <- pca_nhanes %>% select(PC1, PC2)
+clust_dat2 <- pca_nhanes %>% select(PC1, PC2)
 
-sil_width <- vector() #empty vector to hold mean sil width
+sil_width2 <- vector() #empty vector to hold mean sil width
 
 for (i in 2:10) {
-  kms <- kmeans(clust_dat, centers = i) #compute k-means solution
-  sil <- silhouette(kms$cluster, dist(clust_dat)) #get sil widths
-  sil_width[i] <- mean(sil[, 3]) #take averages (higher is better)
+  kms2 <- kmeans(clust_dat2, centers = i) #compute k-means solution
+  sil2 <- silhouette(kms2$cluster, dist(clust_dat2)) #get sil widths
+  sil_width2[i] <- mean(sil2[, 3]) #take averages (higher is better)
 }
 
-ggplot() +
-  geom_line(aes(x = 1:10, y = sil_width)) +
-  scale_x_continuous(name = "k", breaks = 1:10)
+ggplot() + geom_line(aes(x = 1:10, y = sil_width2)) + scale_x_continuous(name = "k", breaks = 1:10)
 
-kmeans <- clust_dat %>% kmeans(2)
-kmeansclust <- clust_dat %>%
-  mutate(cluster = as.factor(kmeans$cluster), Age = nhanes$Age)
-kmeansclust %>% ggplot(aes(PC1, PC2, col = cluster)) +
-  geom_point()
+kmeans2 <- clust_dat2 %>% kmeans(2)
+kmeansclust2 <- clust_dat2 %>% mutate(cluster = as.factor(kmeans2$cluster), Age = nhanes$Age)
+kmeansclust2 %>% ggplot(aes(PC1, PC2, col = cluster)) + geom_point()
 
 # Result: biomarkers don't cluster on age, use regression-based model
 # Go to regression.ipynb, then randomforest.ipynb for models
