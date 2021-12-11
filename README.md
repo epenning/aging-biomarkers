@@ -30,10 +30,9 @@ The National Health and Nutrition Examination Survey (NHANES) contains multiple 
 <https://github.com/epenning/aging-biomarkers.git>
 
 To run our code just follow these easy steps:
-1. Open RStudio on the UT Austin server.
+1. Open RStudio on the UT Austin server
 2. Type "git clone https://github.com/epenning/aging-biomarkers.git" in the Terminal and press Enter
 3. Run setup.R in RStudio
 4. Open Jupyterhub on the UT Austin server to access Python
 5. Run regression.ipynb
 6. Run randomforest.ipynb
-7. Open 
