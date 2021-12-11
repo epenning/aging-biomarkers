@@ -148,28 +148,32 @@ for (i in 2:10) {
   sil_width[i] <- mean(sil[, 3]) #take averages (higher is better)
 }
 
-# Silhouette plot: gives 2 as number of clusters
-ggplot() + geom_line(aes(x = 1:10, y = sil_width)) + scale_x_continuous(name = "k", breaks = 1:10)
+# Silhouette plot: gives 6 as number of clusters
+ggplot() +
+  geom_line(aes(x = 1:10, y = sil_width)) +
+  scale_x_continuous(name = "k", breaks = 1:10)
 
-# Use result from silhouette plot.  How does 2 clusters look?
+# Use result from silhouette plot.  How do 2 clusters look?
 kmeans <- clust_dat %>% kmeans(2)
-kmeansclust <- clust_dat %>% mutate(cluster = as.factor(kmeans$cluster))
-kmeansclust %>% ggplot(aes(Systolic_Blood_Pressure, Blood_Urea_Nitrogen, col = cluster)) + geom_point()
+kmeansclust <-
+  clust_dat %>% mutate(cluster = as.factor(kmeans$cluster))
+kmeansclust %>% ggplot(aes(Systolic_Blood_Pressure, Blood_Urea_Nitrogen,  color = cluster)) +
+  geom_point()
+
+
+
 
 ##### PCA
 
 # Systolic Blood Pressure is just one variable.  What if we look at all of them using PCA?
-pca <- nhanes_scaled %>%
-  select(-ID, -Age, -Gender) %>%
-  prcomp(scale = TRUE)
+pca <- nhanes_scaled %>% select(-ID, -Age, -Gender) %>% prcomp(scale = TRUE)
 
 # Loading score: how much original variable contributes to PC1
 loading_scores <- pca$rotation[, 1]
 loading_scores
 
 # Ranks the contributors to PC 1, with the most significant at the top.
-loading_score_ranked <-
-  names(sort(abs(pca$rotation[, 1]), decreasing = TRUE))
+loading_score_ranked <- names(sort(abs(pca$rotation[, 1]), decreasing = TRUE))
 loading_score_ranked
 
 # Makes a scree plot for PC 1-10.  How much variance in the data does each PC explain
@@ -215,7 +219,7 @@ for (i in 2:10) {
 ggplot() + geom_line(aes(x = 1:10, y = sil_width2)) + scale_x_continuous(name = "k", breaks = 1:10)
 
 kmeans2 <- clust_dat2 %>% kmeans(2)
-kmeansclust2 <- clust_dat2 %>% mutate(cluster = as.factor(kmeans2$cluster), Age = nhanes$Age)
+kmeansclust2 <- clust_dat2 %>% mutate(cluster = as.factor(kmeans2$cluster))
 kmeansclust2 %>% ggplot(aes(PC1, PC2, col = cluster)) + geom_point()
 
 # Result: biomarkers don't cluster on age, use regression-based model
